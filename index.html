@@ -1,26 +1,37 @@
 <div>
   <h1>sandbox</h1>
-  <a href="./1/system-metrics-dashboard.html">System Metrics Dashboard</a>
+
+  <ol id="file-list">
+    <li><a href="./1/auto-clipboard-history.html">Auto Clipboard History</a></li>
+    <li><a href="./1/browser-history-analytics-dashboard.html">Browser History Analytics Dashboard</a></li>
+    <li><a href="./1/browser-metrics-dashboard.html">Browser Metrics Dashboard</a></li>
+    <li><a href="./1/browser-tab-memory-usage.html">Browser Tab Memory Usage</a></li>
+    <li><a href="./1/nonogram-puzzle-game.html">Nonogram Puzzle Game</a></li>
+    <li><a href="./1/sticky-notes.html">Sticky Notes</a></li>
+    <li><a href="./1/system-metrics-dashboard.html">System Metrics Dashboard</a></li>
+    <li><a href="./1/world-clocks-dashboard.html">World Clocks Dashboard</a></li>
+  </ol>
+  
   <ul id="file-list"></ul>
 </div>
 
 <script>
-  // Get the file list from the 1 directory
-  fetch('./1/')
+  // Get the file list from the https://derrick-roach.github.io/sandbox/1/ directory
+  fetch('https://derrick-roach.github.io/sandbox/1/')
     .then(response => {
       if (!response.ok) {
         throw new Error('Failed to fetch file list');
       }
-      return response.json();
+      return response.text(); // Fetch the response as text
     })
     .then(files => {
       const fileList = document.getElementById('file-list');
-      files.forEach(file => {
-        const link = document.createElement('a');
-        link.href = file;
-        link.textContent = file;
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(files, 'text/html'); // Parse the fetched files as HTML
+      const links = doc.querySelectorAll('a'); // Get all the <a> elements from the parsed HTML
+      links.forEach(link => {
         const listItem = document.createElement('li');
-        listItem.appendChild(link);
+        listItem.appendChild(link.cloneNode(true)); // Clone the <a> element and append it to the list item
         fileList.appendChild(listItem);
       });
     })
