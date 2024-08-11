@@ -1,0 +1,228 @@
+<html><head><base href="https://browser-history-analytics.app/">
+<title>Advanced Browser History Analytics Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f0f0;
+  }
+  .dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+  }
+  h1, h2 {
+    color: #333;
+  }
+  .chart-container {
+    margin-bottom: 30px;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  .data-table th, .data-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  .data-table th {
+    background-color: #f2f2f2;
+  }
+  #status {
+    margin-top: 20px;
+    font-style: italic;
+    color: #666;
+  }
+</style>
+</head>
+<body>
+<div class="dashboard">
+  <h1>Advanced Browser History Analytics Dashboard</h1>
+  
+  <div id="status">Loading browser history data...</div>
+
+  <div class="chart-container">
+    <h2>Top Visited Domains</h2>
+    <canvas id="domainChart"></canvas>
+  </div>
+
+  <div class="chart-container">
+    <h2>Time Spent on Top Sites</h2>
+    <canvas id="timeSpentChart"></canvas>
+  </div>
+
+  <div>
+    <h2>10 Most Recently Visited Sites</h2>
+    <table class="data-table" id="recentVisits">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>URL</th>
+          <th>Visit Time</th>
+          <th>Time Spent</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let historyData = [];
+
+function updateStatus(message) {
+  document.getElementById('status').textContent = message;
+}
+
+function getDomain(url) {
+  const a = document.createElement('a');
+  a.href = url;
+  return a.hostname;
+}
+
+function processHistoryData() {
+  const domainCounts = {};
+  const domainTime = {};
+
+  historyData.forEach((item, index) => {
+    const domain = getDomain(item.url);
+    domainCounts[domain] = (domainCounts[domain] || 0) + 1;
+    
+    // Calculate time spent (difference between this visit and the next, or 5 minutes if it's the last visit)
+    const timeSpent = index < historyData.length - 1 
+      ? historyData[index + 1].lastVisitTime - item.lastVisitTime 
+      : 5 * 60 * 1000;
+    
+    domainTime[domain] = (domainTime[domain] || 0) + timeSpent;
+    
+    // Add timeSpent to the history item
+    item.timeSpent = timeSpent;
+  });
+
+  updateDomainChart(domainCounts);
+  updateTimeSpentChart(domainTime);
+  updateRecentVisits();
+}
+
+function updateDomainChart(domainCounts) {
+  const sortedDomains = Object.entries(domainCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+
+  new Chart(document.getElementById('domainChart'), {
+    type: 'bar',
+    data: {
+      labels: sortedDomains.map(d => d[0]),
+      datasets: [{
+        label: 'Visit Count',
+        data: sortedDomains.map(d => d[1]),
+        backgroundColor: 'rgba(54, 162, 235, 0.8)'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Number of Visits'
+          }
+        }
+      }
+    }
+  });
+}
+
+function updateTimeSpentChart(domainTime) {
+  const sortedDomains = Object.entries(domainTime)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+
+  new Chart(document.getElementById('timeSpentChart'), {
+    type: 'bar',
+    data: {
+      labels: sortedDomains.map(d => d[0]),
+      datasets: [{
+        label: 'Time Spent (minutes)',
+        data: sortedDomains.map(d => Math.round(d[1] / (60 * 1000))),
+        backgroundColor: 'rgba(75, 192, 192, 0.8)'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Time Spent (minutes)'
+          }
+        }
+      }
+    }
+  });
+}
+
+function updateRecentVisits() {
+  const tbody = document.querySelector('#recentVisits tbody');
+  tbody.innerHTML = '';
+  
+  historyData.slice(0, 10).forEach(item => {
+    const row = tbody.insertRow();
+    row.insertCell(0).textContent = item.title;
+    row.insertCell(1).textContent = item.url;
+    row.insertCell(2).textContent = new Date(item.lastVisitTime).toLocaleString();
+    row.insertCell(3).textContent = formatTimeSpent(item.timeSpent);
+  });
+}
+
+function formatTimeSpent(ms) {
+  const minutes = Math.floor(ms / (60 * 1000));
+  const seconds = Math.floor((ms % (60 * 1000)) / 1000);
+  return `${minutes}m ${seconds}s`;
+}
+
+function fetchBrowserHistory() {
+  if (chrome && chrome.history) {
+    chrome.history.search({text: '', maxResults: 10000}, function(data) {
+      historyData = data.sort((a, b) => b.lastVisitTime - a.lastVisitTime);
+      processHistoryData();
+      updateStatus('History data loaded and analyzed.');
+    });
+  } else {
+    updateStatus('Browser history API not available. This dashboard requires a browser extension with history permissions.');
+    // For demonstration purposes, let's create some mock data
+    createMockData();
+  }
+}
+
+function createMockData() {
+  const domains = ['example.com', 'google.com', 'github.com', 'stackoverflow.com', 'youtube.com'];
+  const now = Date.now();
+  
+  for (let i = 0; i < 1000; i++) {
+    const randomDomain = domains[Math.floor(Math.random() * domains.length)];
+    const randomTime = now - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000);
+    historyData.push({
+      title: `Page on ${randomDomain}`,
+      url: `https://${randomDomain}/page${i}`,
+      lastVisitTime: randomTime
+    });
+  }
+
+  historyData.sort((a, b) => b.lastVisitTime - a.lastVisitTime);
+  processHistoryData();
+  updateStatus('Mock history data generated and analyzed.');
+}
+
+fetchBrowserHistory();
+</script>
+</body></html>

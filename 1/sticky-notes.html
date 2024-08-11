@@ -1,0 +1,157 @@
+<html><head><base href="https://sticky-notes-app.com/">
+<title>Dynamic Sticky Notes App</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 20px;
+  }
+  #app {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  h1 {
+    color: #333;
+    text-align: center;
+  }
+  #notes-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+  }
+  .note {
+    background-color: #ffd700;
+    width: 200px;
+    min-height: 200px;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 5px;
+    position: relative;
+    overflow: hidden;
+  }
+  .note textarea {
+    width: 100%;
+    height: 170px;
+    border: none;
+    resize: none;
+    font-family: inherit;
+    font-size: 16px;
+    background-color: transparent;
+  }
+  .note .delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .add-note-btn {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .color-picker {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>Dynamic Sticky Notes App</h1>
+  <div id="notes-container"></div>
+  <button class="add-note-btn" onclick="addNote()">Add Note</button>
+</div>
+
+<script>
+let notes = [];
+
+function addNote() {
+  const note = {
+    id: Date.now(),
+    content: '',
+    color: getRandomColor()
+  };
+  notes.push(note);
+  renderNotes();
+  saveNotes();
+}
+
+function deleteNote(id) {
+  notes = notes.filter(note => note.id !== id);
+  renderNotes();
+  saveNotes();
+}
+
+function updateNoteContent(id, content) {
+  const note = notes.find(note => note.id === id);
+  if (note) {
+    note.content = content;
+    saveNotes();
+  }
+}
+
+function updateNoteColor(id, color) {
+  const note = notes.find(note => note.id === id);
+  if (note) {
+    note.color = color;
+    renderNotes();
+    saveNotes();
+  }
+}
+
+function renderNotes() {
+  const container = document.getElementById('notes-container');
+  container.innerHTML = '';
+  notes.forEach(note => {
+    const noteElement = document.createElement('div');
+    noteElement.className = 'note';
+    noteElement.style.backgroundColor = note.color;
+    noteElement.innerHTML = `
+      <button class="delete-btn" onclick="deleteNote(${note.id})">×</button>
+      <textarea onchange="updateNoteContent(${note.id}, this.value)">${note.content}</textarea>
+      <input type="color" class="color-picker" value="${note.color}" onchange="updateNoteColor(${note.id}, this.value)">
+    `;
+    container.appendChild(noteElement);
+  });
+}
+
+function saveNotes() {
+  localStorage.setItem('sticky-notes', JSON.stringify(notes));
+}
+
+function loadNotes() {
+  const savedNotes = localStorage.getItem('sticky-notes');
+  if (savedNotes) {
+    notes = JSON.parse(savedNotes);
+    renderNotes();
+  }
+}
+
+function getRandomColor() {
+  const colors = ['#ffd700', '#ff7eb9', '#7afcff', '#feff9c', '#fff740'];
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+
+// Initialize the app
+loadNotes();
+</script>
+</body></html>

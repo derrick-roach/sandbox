@@ -1,0 +1,185 @@
+<html><head><base href="https://browserdashboard.com/">
+<title>Browser Metrics Dashboard</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f4f8;
+    color: #333;
+  }
+  .dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    transition: transform 0.3s ease;
+  }
+  .card:hover {
+    transform: translateY(-5px);
+  }
+  h1, h2 {
+    margin-top: 0;
+    color: #2c3e50;
+  }
+  .metric {
+    font-size: 2em;
+    font-weight: bold;
+    color: #3498db;
+  }
+  .chart-container {
+    height: 200px;
+    margin-top: 20px;
+  }
+  #memoryChart, #cpuChart {
+    width: 100%;
+    height: 100%;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<h1>Browser Metrics Dashboard</h1>
+<div class="dashboard">
+  <div class="card">
+    <h2>Memory Usage</h2>
+    <div id="memoryUsage" class="metric">Calculating...</div>
+    <div class="chart-container">
+      <canvas id="memoryChart"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <h2>CPU Usage</h2>
+    <div id="cpuUsage" class="metric">Calculating...</div>
+    <div class="chart-container">
+      <canvas id="cpuChart"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Browser Information</h2>
+    <div id="browserInfo"></div>
+  </div>
+  <div class="card">
+    <h2>Network Information</h2>
+    <div id="networkInfo"></div>
+  </div>
+</div>
+
+<script>
+// Mock data generation (replace with actual API calls in a real scenario)
+function getRandomValue(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function updateMemoryUsage() {
+  const usage = getRandomValue(500, 2000);
+  document.getElementById('memoryUsage').textContent = `${usage} MB`;
+  return usage;
+}
+
+function updateCPUUsage() {
+  const usage = getRandomValue(10, 90);
+  document.getElementById('cpuUsage').textContent = `${usage}%`;
+  return usage;
+}
+
+function updateBrowserInfo() {
+  const info = `
+    <p><strong>User Agent:</strong> ${navigator.userAgent}</p>
+    <p><strong>Platform:</strong> ${navigator.platform}</p>
+    <p><strong>Cookies Enabled:</strong> ${navigator.cookieEnabled}</p>
+    <p><strong>Language:</strong> ${navigator.language}</p>
+  `;
+  document.getElementById('browserInfo').innerHTML = info;
+}
+
+function updateNetworkInfo() {
+  if ('connection' in navigator) {
+    const conn = navigator.connection;
+    const info = `
+      <p><strong>Downlink:</strong> ${conn.downlink} Mbps</p>
+      <p><strong>Effective Type:</strong> ${conn.effectiveType}</p>
+      <p><strong>RTT:</strong> ${conn.rtt} ms</p>
+      <p><strong>Save Data:</strong> ${conn.saveData ? 'On' : 'Off'}</p>
+    `;
+    document.getElementById('networkInfo').innerHTML = info;
+  } else {
+    document.getElementById('networkInfo').textContent = 'Network information not available';
+  }
+}
+
+// Chart initialization
+const memoryChartCtx = document.getElementById('memoryChart').getContext('2d');
+const memoryChart = new Chart(memoryChartCtx, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [{
+      label: 'Memory Usage (MB)',
+      data: [],
+      borderColor: '#3498db',
+      tension: 0.1
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false
+  }
+});
+
+const cpuChartCtx = document.getElementById('cpuChart').getContext('2d');
+const cpuChart = new Chart(cpuChartCtx, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [{
+      label: 'CPU Usage (%)',
+      data: [],
+      borderColor: '#e74c3c',
+      tension: 0.1
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false
+  }
+});
+
+function updateCharts() {
+  const now = new Date();
+  const timeLabel = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+
+  // Update Memory Chart
+  memoryChart.data.labels.push(timeLabel);
+  memoryChart.data.datasets[0].data.push(updateMemoryUsage());
+  if (memoryChart.data.labels.length > 10) {
+    memoryChart.data.labels.shift();
+    memoryChart.data.datasets[0].data.shift();
+  }
+  memoryChart.update();
+
+  // Update CPU Chart
+  cpuChart.data.labels.push(timeLabel);
+  cpuChart.data.datasets[0].data.push(updateCPUUsage());
+  if (cpuChart.data.labels.length > 10) {
+    cpuChart.data.labels.shift();
+    cpuChart.data.datasets[0].data.shift();
+  }
+  cpuChart.update();
+}
+
+// Initial updates
+updateBrowserInfo();
+updateNetworkInfo();
+updateCharts();
+
+// Periodic updates
+setInterval(updateCharts, 2000);
+setInterval(updateNetworkInfo, 5000);
+</script>
+</body></html>

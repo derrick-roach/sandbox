@@ -1,0 +1,119 @@
+<html><head><base href="https://autoclipboard.app/">
+<title>Auto Clipboard History</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f0f0;
+  }
+  h1, h2 {
+    color: #333;
+  }
+  #clipboard-history {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    max-width: 600px;
+    margin: 20px auto;
+  }
+  .clipboard-item {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    word-wrap: break-word;
+  }
+  #status {
+    margin-top: 20px;
+    font-style: italic;
+    color: #666;
+  }
+</style>
+</head>
+<body>
+<h1>Auto Clipboard History</h1>
+<div id="clipboard-history">
+  <h2>Recent Clipboard Items</h2>
+  <div id="history-list"></div>
+  <div id="status"></div>
+</div>
+
+<script>
+const MAX_HISTORY = 10;
+const STORAGE_KEY = 'autoClipboardHistory';
+
+function saveClipboard(content) {
+  if (content) {
+    let history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    if (history[0] !== content) {
+      history.unshift(content);
+      history = history.slice(0, MAX_HISTORY);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+      displayHistory();
+    }
+  }
+}
+
+function displayHistory() {
+  const historyList = document.getElementById('history-list');
+  const history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  
+  historyList.innerHTML = '';
+  history.forEach((item, index) => {
+    const itemElement = document.createElement('div');
+    itemElement.className = 'clipboard-item';
+    itemElement.textContent = item;
+    historyList.appendChild(itemElement);
+  });
+}
+
+function updateStatus(message) {
+  document.getElementById('status').textContent = message;
+}
+
+// Initial display of history
+displayHistory();
+
+// Auto-save clipboard content
+async function autoSaveClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    saveClipboard(text);
+    updateStatus('Clipboard content auto-saved: ' + new Date().toLocaleTimeString());
+  } catch (err) {
+    console.error('Failed to read clipboard contents: ', err);
+    updateStatus('Failed to access clipboard. Please ensure you\'ve granted permission.');
+  }
+}
+
+// Check clipboard periodically
+setInterval(autoSaveClipboard, 1000);
+
+// Listen for copy and cut events
+document.addEventListener('copy', () => {
+  setTimeout(autoSaveClipboard, 100);
+});
+
+document.addEventListener('cut', () => {
+  setTimeout(autoSaveClipboard, 100);
+});
+
+// Request clipboard permission
+if (navigator.permissions && navigator.permissions.query) {
+  navigator.permissions.query({name: 'clipboard-read'}).then(result => {
+    if (result.state === 'granted') {
+      updateStatus('Clipboard access granted. Auto-saving enabled.');
+    } else if (result.state === 'prompt') {
+      updateStatus('Please allow clipboard access when prompted.');
+    } else {
+      updateStatus('Clipboard access denied. Auto-saving disabled.');
+    }
+  });
+} else {
+  updateStatus('Clipboard permissions API not supported. Auto-saving may not work.');
+}
+</script>
+</body></html>

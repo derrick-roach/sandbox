@@ -1,0 +1,246 @@
+<html><head><base href="https://nonogram-puzzle-game.com/">
+<title>Dynamic Nonogram Puzzle Game</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  #game-container {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    text-align: center;
+  }
+  h1 {
+    color: #333;
+    margin-bottom: 20px;
+  }
+  #game-board {
+    display: inline-grid;
+    gap: 1px;
+    background-color: #ccc;
+    padding: 1px;
+    margin-bottom: 20px;
+  }
+  .cell {
+    width: 30px;
+    height: 30px;
+    background-color: white;
+    border: 1px solid #ddd;
+    cursor: pointer;
+  }
+  .cell.filled {
+    background-color: #333;
+  }
+  .cell.marked {
+    background-color: #ff6b6b;
+  }
+  .row-hint, .col-hint {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: #555;
+  }
+  .row-hint {
+    padding-right: 5px;
+  }
+  .col-hint {
+    flex-direction: column;
+    padding-bottom: 5px;
+  }
+  .hint-number {
+    margin: 0 2px;
+  }
+  #controls {
+    margin-bottom: 20px;
+  }
+  button, select {
+    margin: 0 5px;
+    padding: 5px 10px;
+    font-size: 14px;
+  }
+  #message {
+    font-weight: bold;
+    margin-top: 10px;
+    min-height: 20px;
+  }
+</style>
+</head>
+<body>
+<div id="game-container">
+  <h1>Nonogram Puzzle Game</h1>
+  <div id="controls">
+    <select id="size-select">
+      <option value="5">5x5</option>
+      <option value="10" selected>10x10</option>
+      <option value="15">15x15</option>
+    </select>
+    <select id="difficulty-select">
+      <option value="easy">Easy</option>
+      <option value="medium" selected>Medium</option>
+      <option value="hard">Hard</option>
+    </select>
+    <button id="new-game-btn">New Game</button>
+    <button id="check-btn">Check Solution</button>
+  </div>
+  <div id="game-board"></div>
+  <div id="message"></div>
+</div>
+
+<script>
+class NonogramGame {
+  constructor(size, difficulty) {
+    this.size = size;
+    this.difficulty = difficulty;
+    this.board = [];
+    this.solution = [];
+    this.rowHints = [];
+    this.colHints = [];
+    this.init();
+  }
+
+  init() {
+    this.generateSolution();
+    this.calculateHints();
+    this.createBoard();
+    this.render();
+  }
+
+  generateSolution() {
+    const fillProbability = this.getDifficultyProbability();
+    this.solution = Array(this.size).fill().map(() => 
+      Array(this.size).fill().map(() => Math.random() < fillProbability ? 1 : 0)
+    );
+  }
+
+  getDifficultyProbability() {
+    switch(this.difficulty) {
+      case 'easy': return 0.7;
+      case 'medium': return 0.5;
+      case 'hard': return 0.3;
+      default: return 0.5;
+    }
+  }
+
+  calculateHints() {
+    this.rowHints = this.solution.map(row => this.getLineHints(row));
+    this.colHints = Array(this.size).fill().map((_, i) => 
+      this.getLineHints(this.solution.map(row => row[i]))
+    );
+  }
+
+  getLineHints(line) {
+    return line.reduce((acc, cell, i, arr) => {
+      if (cell === 1) {
+        if (i === 0 || arr[i-1] === 0) acc.push(1);
+        else acc[acc.length-1]++;
+      }
+      return acc;
+    }, []);
+  }
+
+  createBoard() {
+    this.board = Array(this.size).fill().map(() => Array(this.size).fill(0));
+  }
+
+  render() {
+    const gameBoard = document.getElementById('game-board');
+    gameBoard.innerHTML = '';
+    gameBoard.style.gridTemplateColumns = `auto repeat(${this.size}, 30px)`;
+    gameBoard.style.gridTemplateRows = `auto repeat(${this.size}, 30px)`;
+
+    // Render column hints
+    gameBoard.appendChild(document.createElement('div'));
+    for (let i = 0; i < this.size; i++) {
+      const colHint = document.createElement('div');
+      colHint.className = 'col-hint';
+      this.colHints[i].forEach(hint => {
+        const hintNumber = document.createElement('span');
+        hintNumber.className = 'hint-number';
+        hintNumber.textContent = hint;
+        colHint.appendChild(hintNumber);
+      });
+      gameBoard.appendChild(colHint);
+    }
+
+    // Render row hints and cells
+    for (let i = 0; i < this.size; i++) {
+      const rowHint = document.createElement('div');
+      rowHint.className = 'row-hint';
+      this.rowHints[i].forEach(hint => {
+        const hintNumber = document.createElement('span');
+        hintNumber.className = 'hint-number';
+        hintNumber.textContent = hint;
+        rowHint.appendChild(hintNumber);
+      });
+      gameBoard.appendChild(rowHint);
+
+      for (let j = 0; j < this.size; j++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.row = i;
+        cell.dataset.col = j;
+        cell.addEventListener('click', this.handleCellClick.bind(this));
+        cell.addEventListener('contextmenu', this.handleCellRightClick.bind(this));
+        gameBoard.appendChild(cell);
+      }
+    }
+  }
+
+  handleCellClick(event) {
+    const row = parseInt(event.target.dataset.row);
+    const col = parseInt(event.target.dataset.col);
+    this.board[row][col] = this.board[row][col] === 1 ? 0 : 1;
+    this.updateCell(row, col);
+  }
+
+  handleCellRightClick(event) {
+    event.preventDefault();
+    const row = parseInt(event.target.dataset.row);
+    const col = parseInt(event.target.dataset.col);
+    this.board[row][col] = this.board[row][col] === 2 ? 0 : 2;
+    this.updateCell(row, col);
+  }
+
+  updateCell(row, col) {
+    const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+    cell.className = 'cell';
+    if (this.board[row][col] === 1) cell.classList.add('filled');
+    if (this.board[row][col] === 2) cell.classList.add('marked');
+  }
+
+  checkSolution() {
+    const isCorrect = this.board.every((row, i) => 
+      row.every((cell, j) => (cell === 1) === (this.solution[i][j] === 1))
+    );
+    const message = document.getElementById('message');
+    message.textContent = isCorrect ? 'Congratulations! You solved the puzzle!' : 'Not quite right. Keep trying!';
+    message.style.color = isCorrect ? 'green' : 'red';
+  }
+}
+
+let game;
+
+function startNewGame() {
+  const size = parseInt(document.getElementById('size-select').value);
+  const difficulty = document.getElementById('difficulty-select').value;
+  game = new NonogramGame(size, difficulty);
+  document.getElementById('message').textContent = '';
+}
+
+document.getElementById('new-game-btn').addEventListener('click', startNewGame);
+document.getElementById('check-btn').addEventListener('click', () => game.checkSolution());
+
+// Start the first game
+startNewGame();
+</script>
+</body></html>
