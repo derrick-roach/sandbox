@@ -1,18 +1,41 @@
-<div>
-  <h1>sandbox</h1>
+<!-- INDEX -->
 
-  <ol id="file-list">
-    <li><a href="./1/auto-clipboard-history.html">Auto Clipboard History</a></li>
-    <li><a href="./1/browser-history-analytics-dashboard.html">Browser History Analytics Dashboard</a></li>
-    <li><a href="./1/browser-metrics-dashboard.html">Browser Metrics Dashboard</a></li>
-    <li><a href="./1/browser-tab-memory-usage.html">Browser Tab Memory Usage</a></li>
-    <li><a href="./1/nonogram-puzzle-game.html">Nonogram Puzzle Game</a></li>
-    <li><a href="./1/sticky-notes.html">Sticky Notes</a></li>
-    <li><a href="./1/system-metrics-dashboard.html">System Metrics Dashboard</a></li>
-    <li><a href="./1/world-clocks-dashboard.html">World Clocks Dashboard</a></li>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="./css/styles.css">
+  </head>
+
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('Service worker registered:', registration);
+          })
+          .catch(error => {
+            console.error('Error registering service worker:', error);
+          });
+      });
+    }
+  </script>
+
+<div class="container">
+  <h1 class="title">sandbox</h1>
+
+  <ol id="file-list" class="file-list">
+    <li><a href="./1/auto-clipboard-history.html" class="file-link">Auto Clipboard History</a></li>
+    <li><a href="./1/browser-history-analytics-dashboard.html" class="file-link">Browser History Analytics Dashboard</a></li>
+    <li><a href="./1/browser-metrics-dashboard.html" class="file-link">Browser Metrics Dashboard</a></li>
+    <li><a href="./1/browser-tab-memory-usage.html" class="file-link">Browser Tab Memory Usage</a></li>
+    <li><a href="./1/nonogram-puzzle-game.html" class="file-link">Nonogram Puzzle Game</a></li>
+    <li><a href="./1/sticky-notes.html" class="file-link">Sticky Notes</a></li>
+    <li><a href="./1/system-metrics-dashboard.html" class="file-link">System Metrics Dashboard</a></li>
+    <li><a href="./1/world-clocks-dashboard.html" class="file-link">World Clocks Dashboard</a></li>
   </ol>
   
-  <ul id="file-list"></ul>
+  <ul id="file-list" class="file-list"></ul>
 </div>
 
 <script>
@@ -39,3 +62,5 @@
       console.error('Error fetching file list:', error);
     });
 </script>
+
+</html>
