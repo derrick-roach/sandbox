@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recently Closed Tabs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background: #f4f4f4;
+            margin: 5px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Recently Closed Tabs</h1>
+    <ul id="recentlyClosedTabs">
+        <!-- List of recently closed tabs will be populated here -->
+    </ul>
+
+    <script>
+        // Function to add a URL to the list of recently closed tabs
+        function addRecentlyClosedTab(url) {
+            let recentlyClosedTabs = JSON.parse(localStorage.getItem('recentlyClosedTabs')) || [];
+            recentlyClosedTabs.unshift(url); // Add to the beginning of the list
+            if (recentlyClosedTabs.length > 10) {
+                recentlyClosedTabs.pop(); // Keep only the last 10 items
+            }
+            localStorage.setItem('recentlyClosedTabs', JSON.stringify(recentlyClosedTabs));
+        }
+
+        // Function to display the list of recently closed tabs
+        function displayRecentlyClosedTabs() {
+            let recentlyClosedTabs = JSON.parse(localStorage.getItem('recentlyClosedTabs')) || [];
+            let list = document.getElementById('recentlyClosedTabs');
+            list.innerHTML = '';
+            recentlyClosedTabs.forEach(tab => {
+                let listItem = document.createElement('li');
+                listItem.textContent = tab;
+                list.appendChild(listItem);
+            });
+        }
+
+        // Add the current URL to the list when the page is unloaded
+        window.addEventListener('beforeunload', function () {
+            addRecentlyClosedTab(window.location.href);
+        });
+
+        // Display the list of recently closed tabs on page load
+        window.addEventListener('load', displayRecentlyClosedTabs);
+    </script>
+</body>
+</html>
